@@ -9,6 +9,7 @@ function App() {
   const [amount, setAmount] = useState(""); 
   const [gameResult, setGameResult] = useState(null); // State for game result
   const [error, setError] = useState(null); // State for error
+  const [isDeposit, setIsDeposit] = useState(false); // State to toggle deposit form
 
   const createAgreement = async () => {
     try {
@@ -17,9 +18,23 @@ function App() {
       const tx = await contract.newAgreement(bob, alice, amountInWei);
       await tx.wait();
       alert("Agreement created successfully!");
+      setIsDeposit(true); // Show deposit form after agreement creation
     } catch (err) {
       console.error("Error creating agreement: ", err);
       alert("Error creating agreement: " + err.message);
+    }
+  };
+
+  const depositFunds = async (userAddress) => {
+    try {
+      const contract = await getContract();
+      const amountInWei = parseEther(amount);
+      const tx = await contract.deposit(userAddress, { value: amountInWei }); // Deposit function
+      await tx.wait();
+      alert("Deposit successful!");
+    } catch (err) {
+      console.error("Error depositing funds: ", err);
+      alert("Error depositing funds: " + err.message);
     }
   };
 
@@ -73,7 +88,7 @@ function App() {
         </label>
         <br />
         <label>
-          Your Address:
+          Your Address (Bob's Address):
           <input
             type="text"
             value={bob}
@@ -83,7 +98,7 @@ function App() {
         </label>
         <br />
         <label>
-          Opponent's Address:
+          Opponent's Address (Alice's Address):
           <input
             type="text"
             value={alice}
@@ -104,6 +119,16 @@ function App() {
         <br />
         <button type="submit">Send Challenge!</button>
       </form>
+
+      {/* Deposit Section */}
+      {isDeposit && (
+        <div>
+          <h2>Deposit Funds</h2>
+          <button onClick={() => depositFunds(bob)}>Deposit for Bob</button>
+          <button onClick={() => depositFunds(alice)}>Deposit for Alice</button>
+        </div>
+      )}
+
       {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error messages */}
       {gameResult && 
         <div>
