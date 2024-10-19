@@ -1,26 +1,21 @@
-import React, { useState } from 'react';  // Import useState from React
+import React, { useState } from 'react';  
 import { ethers, parseEther } from "ethers";
-import { getContract } from './contract';  // Import getContract
+import { getContract } from './contract';  
 
 function App() {
-  const [bob, setBob] = useState("");       // Initialize state for bob
-  const [alice, setAlice] = useState("");   // Initialize state for alice
-  const [amount, setAmount] = useState(""); // Initialize state for amount
+  const [username, setUsername] = useState("");
+  const [bob, setBob] = useState("");       
+  const [alice, setAlice] = useState("");   
+  const [amount, setAmount] = useState(""); 
+  const [gameResult, setGameResult] = useState(null); // State for game result
+  const [error, setError] = useState(null); // State for error
 
   const createAgreement = async () => {
     try {
-      // Get the contract instance
       const contract = await getContract();
-
-      // Convert the amount from Ether to Wei using parseEther
       const amountInWei = parseEther(amount);
-
-      // Call the newAgreement function
       const tx = await contract.newAgreement(bob, alice, amountInWei);
-
-      // Wait for the transaction to be mined
       await tx.wait();
-
       alert("Agreement created successfully!");
     } catch (err) {
       console.error("Error creating agreement: ", err);
@@ -28,17 +23,57 @@ function App() {
     }
   };
 
+  const fetchGameResult = async () => {
+    if (!username) {
+      setError("Please enter a username.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/get_game?username=${username}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setGameResult(result); // Update the state with the game result
+      setError(null); // Clear any previous errors
+    } catch (err) {
+      setError(`Failed to fetch data: ${err.message}`);
+      setGameResult(null); // Clear previous game results
+    }
+  };
+
   return (
     <div>
-      <h1>Create a New Agreement</h1>
+      <h1>Create Challenge</h1>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
+          // First, create the agreement
           await createAgreement();
+          
+          // Then, fetch the game result
+          await fetchGameResult();
+          
+          if (gameResult) {
+            alert(gameResult);
+          } else if (error) {
+            alert(error); // Alert any error if it exists
+          }
         }}
       >
         <label>
-          Bob's Address:
+          Your Username:
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </label>
+        <br />
+        <label>
+          Your Address:
           <input
             type="text"
             value={bob}
@@ -48,7 +83,7 @@ function App() {
         </label>
         <br />
         <label>
-          Alice's Address:
+          Opponent's Address:
           <input
             type="text"
             value={alice}
@@ -67,8 +102,18 @@ function App() {
           />
         </label>
         <br />
-        <button type="submit">Create Agreement</button>
+        <button type="submit">Send Challenge!</button>
       </form>
+      {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error messages */}
+      {gameResult && 
+        <div>
+            <h1 className="title">Game Results:</h1>
+            <h1 className="White">{gameResult.White}</h1>
+            <h2>vs</h2>
+            <h1 className="Black">{gameResult.Black}</h1>
+            <h1>{gameResult.Winner} wins!</h1>
+        </div>
+      }
     </div>
   );
 }
