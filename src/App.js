@@ -116,21 +116,34 @@ const completeChallenge = async () => {
     try {
       const contract = await getContract();
       const agreement = await contract.lastAgreement(); // Access the last agreement
-      if(agreement[0].toLowerCase() === bob && agreement[1].toLowerCase() === alice){
-        fetchGameResult();
+  
+      // Normalize addresses by converting to lowercase for case-insensitive comparison
+      const normalizedBob = bob.toLowerCase();
+      const normalizedAlice = alice.toLowerCase();
+  
+      // Normalize the agreement addresses by converting to lowercase
+      const normalizedAgreementBob = agreement[0].toLowerCase();
+      const normalizedAgreementAlice = agreement[1].toLowerCase();
+  
+      // Compare the normalized addresses to verify
+      if (normalizedBob === normalizedAgreementBob && normalizedAlice === normalizedAgreementAlice) {
+        await fetchGameResult();  // Fetch game result only if agreement matches
+      } else {
+        console.error("Agreement parties do not match the expected players.");
       }
     } catch (err) {
       console.error("Error fetching agreement: ", err);
     }
-  };
+  };  
+  
 
   return (
     <div className="app-container">
       <h1 className="title">ETHGambit</h1>
       
-      { isStart &&
-        <div>
-          <h2 className="subtitle">Create a Challenge</h2>
+{ isStart &&
+<div>
+<h2 className="subtitle">Create a Challenge</h2>
 
 <form className="form-container"
   onSubmit={async (e) => {
