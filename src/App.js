@@ -42,17 +42,26 @@ function App() {
     }
   };
 
-  const depositFunds = async () => {
-    try {
-      const contract = await getContract();
-      const tx = await contract.deposit(0); // Deposit function
-      await tx.wait();
-      alert("Deposit successful!");
-    } catch (err) {
-      console.error("Error depositing funds: ", err);
-      alert("Error depositing funds: " + err.message);
-    }
-  };
+  const depositFunds = async (amount) => {
+  try {
+    const contract = await getContract();
+    
+    // Convert the amount to the appropriate format (Wei)
+    const depositAmountInWei = ethers.utils.parseEther(amount.toString());
+    
+    // Call the deposit function and include the value in the transaction
+    const tx = await contract.deposit(0, depositAmountInWei, {
+      value: depositAmountInWei // Send the value along with the transaction
+    });
+    
+    await tx.wait();
+    alert("Deposit successful!");
+  } catch (err) {
+    console.error("Error depositing funds: ", err);
+    alert("Error depositing funds: " + err.message);
+  }
+};
+
 
   const getAgreement = async () => {
     try {
