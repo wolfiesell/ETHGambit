@@ -25,11 +25,10 @@ function App() {
     }
   };
 
-  const depositFunds = async (userAddress) => {
+  const depositFunds = async () => {
     try {
       const contract = await getContract();
-      const amountInWei = parseEther(amount);
-      const tx = await contract.deposit(userAddress, { value: amountInWei }); // Deposit function
+      const tx = await contract.deposit(0); // Deposit function
       await tx.wait();
       alert("Deposit successful!");
     } catch (err) {
@@ -68,7 +67,8 @@ function App() {
           await createAgreement();
           
           // Then, fetch the game result
-          await fetchGameResult();
+          // WAIT TO CALL UNTIL GAME IS OVER  
+          // await fetchGameResult();
           
           if (gameResult) {
             alert(gameResult);
@@ -88,7 +88,7 @@ function App() {
         </label>
         <br />
         <label>
-          Your Address (Bob's Address):
+          Your Address:
           <input
             type="text"
             value={bob}
@@ -98,7 +98,7 @@ function App() {
         </label>
         <br />
         <label>
-          Opponent's Address (Alice's Address):
+          Opponent's Address:
           <input
             type="text"
             value={alice}
@@ -124,8 +124,7 @@ function App() {
       {isDeposit && (
         <div>
           <h2>Deposit Funds</h2>
-          <button onClick={() => depositFunds(bob)}>Deposit for Bob</button>
-          <button onClick={() => depositFunds(alice)}>Deposit for Alice</button>
+          <button onClick={() => depositFunds(bob)}>Deposit Funds</button>
         </div>
       )}
 
