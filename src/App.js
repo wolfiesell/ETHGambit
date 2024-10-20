@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { ethers, parseEther } from "ethers";
 import { getContract } from './contract';
+import './App.css';  // Import the CSS file
 
 function App() {
   const [username, setUsername] = useState("");
   const [bob, setBob] = useState("");       
   const [alice, setAlice] = useState("");   
+  const [isStart, setIsStart] = useState(true);
   const [gameResult, setGameResult] = useState(null); // State for game result
   const [error, setError] = useState(null); // State for error
   const [isDeposit, setIsDeposit] = useState(false); // State to toggle deposit form
@@ -44,6 +46,7 @@ function App() {
       await tx.wait();
       setAgrText('Challenge Successfully Sent!')
       setIsDeposit(true); // Show deposit form after agreement creation
+      setIsStart(false);
     } catch (err) {
       console.error("Error creating agreement: ", err);
     }
@@ -64,6 +67,7 @@ function App() {
     await tx.wait();
     setDepoText('Deposit Successful!');
     setRefreshButton(true);
+    setIsDeposit(false); 
   } catch (err) {
     console.error("Error depositing funds: ", err);
   }
@@ -102,7 +106,6 @@ const completeChallenge = async () => {
       const result = await response.json();
       setGameResult(result); // Update the state with the game result
       setIsDistribute(true);
-      setRefreshButton(false);
     } catch (err) {
       setError(err);
       setGameResult(null); // Clear previous game results
@@ -122,94 +125,90 @@ const completeChallenge = async () => {
   };
 
   return (
-    <div>
-      <h1>ETHGambit</h1>
-      <br></br>
-      <h2>First Create a Challenge</h2>
+    <div className="app-container">
+      <h1 className="title">ETHGambit</h1>
+      
+      { isStart &&
+        <div>
+          <h2 className="subtitle">Create a Challenge</h2>
 
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          // First, create the agreement
-          try{
-            await createAgreement();
-          }
-          catch (err){
-            console.error(err);
-          }
-        }}
-      >
-        <label>
-          Your Lichess Username:
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Opponent's Address:
-          <input
-            type="text"
-            value={alice}
-            onChange={(e) => setAlice(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Wager Amount (POL):
-          <input
-            type="number"
-            step="0.01"
-            value={ethAmount}
-            onChange={(e) => setEthAmount(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        <button type="submit">Send Challenge!</button>
-      </form>
+<form className="form-container"
+  onSubmit={async (e) => {
+    e.preventDefault();
+    try {
+      await createAgreement();
+    } catch (err) {
+      console.error(err);
+    }
+  }}
+>
+  <label>Your Lichess Username:</label>
+  <input
+    type="text"
+    value={username}
+    onChange={(e) => setUsername(e.target.value)}
+    required
+    className="input"
+  />
+
+  <label>Opponent's Address:</label>
+  <input
+    type="text"
+    value={alice}
+    onChange={(e) => setAlice(e.target.value)}
+    required
+    className="input"
+  />
+
+  <label>Wager Amount (POL):</label>
+  <input
+    type="number"
+    step="0.01"
+    value={ethAmount}
+    onChange={(e) => setEthAmount(e.target.value)}
+    required
+    className="input"
+  />
+
+  <button type="submit" className="btn">Send Challenge!</button>
+</form>
+        </div>
+      }
 
       <p>{agreement_text}</p>
 
-      {/* Deposit Section */}
       {isDeposit && (
-        <div>
-          <h2>Now Deposit Your Funds</h2>
-          <button onClick={() => depositFunds()}>Deposit Funds</button>
+        <div className="deposit-section">
+          <h2 className="subtitle">Deposit Your Funds</h2>
+          <button onClick={() => depositFunds()} className="btn">Deposit Funds</button>
         </div>
       )}
 
       <p>{depositText}</p>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error messages */}
-      {refreshButton &&
+      {error && <p className="error">{error}</p>}
+      {refreshButton && (
         <div>
-          <h2>Waiting For Game to End...</h2>
-          <button onClick={()=>{checkAgreement()}}>Refresh Game Results</button>
+          <h2 className="subtitle">Waiting For Game to End...</h2>
+          <button onClick={() => checkAgreement()} className="btn">Refresh Game Results</button>
         </div>
-      }
-      {gameResult && 
-        <div>
-            <h1 className="title">Game Results:</h1>
-            <h1 className="White">{gameResult.White}</h1>
-            <h2>vs</h2>
-            <h1 className="Black">{gameResult.Black}</h1>
-            <h1>{gameResult.Winner} Wins {ethAmount} POL</h1>
-        </div>
-      }
+      )}
 
-      {isDistribute && 
-        <div>
-          <h2>Funds Are Ready to Distribute!</h2>
-          <button onClick={()=>{completeChallenge()}}>Distribute Funds</button>
+      {gameResult && (
+        <div className="results-section">
+          <h1 className="title">Game Results:</h1>
+          <h1>{gameResult.White} vs {gameResult.Black}</h1>
+          <h2>{gameResult.Winner} Wins {ethAmount} POL</h2>
+        </div>
+      )}
+
+      {isDistribute && (
+        <div className="distribute-section">
+          <h2 className="subtitle">Funds Are Ready to Distribute!</h2>
+          <button onClick={() => completeChallenge()} className="btn">Distribute Funds</button>
           <p>{distributeText}</p>
         </div>
-      }
-
+      )}
     </div>
   );
 }
