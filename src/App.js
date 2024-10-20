@@ -13,6 +13,8 @@ function App() {
   const [walletAddress, setWalletAddress] = useState(null); // State for wallet address
   const [agreement_text, setAgrText] = useState('');
   const [ethAmount, setEthAmount] = useState(0);
+  const [distributeText, setDistributeText] = useState('');
+  const [isDistribute, setIsDistribute] = useState(false);
 
 
   const connectWallet = async () => {
@@ -57,9 +59,10 @@ function App() {
     const tx = await contract.deposit(0, {
       value: amountInWei // Send the value along with the transaction
     });
-    setDepoText('Depositing...');
+    setDepoText('Depositing Funds...');
     await tx.wait();
     setDepoText('Deposit Successful!');
+    setIsDistribute(true);
   } catch (err) {
     console.error("Error depositing funds: ", err);
   }
@@ -68,30 +71,21 @@ function App() {
 const completeChallenge = async () => {
   try {
     const contract = await getContract();
-    await fetchGameResult(); // Wait for game result to be fetched
+    setDistributeText('Fetching Game Results...');
 
     if (!gameResult) {
       throw new Error("Game result is not available or invalid.");
     }
 
     const tx = await contract.complete(0, gameResult.Code); // Ensure gameResult.Code is valid
+    setDistributeText('Distributing Funds...');
     await tx.wait();
-    console.log("Challenge completed!");
+    setDistributeText('Funds Distributed!');
   } catch (err) {
     console.error("Error completing challenge: ", err);
   }
 };
 
-
-  // const getAgreement = async () => {
-  //   try {
-  //     const contract = await getContract();
-  //     const agreement = await contract.lastAgreement(); // Access the last agreement
-  //     return await agreement;
-  //   } catch (err) {
-  //     console.error("Error fetching agreement: ", err);
-  //   }
-  // };
 
   const fetchGameResult = async () => {
     if (!username) {
@@ -112,9 +106,25 @@ const completeChallenge = async () => {
     }
   };
 
+  const checkAgreement = async () => {
+    try {
+      const contract = await getContract();
+      const agreement = await contract.lastAgreement(); // Access the last agreement
+      console.log(agreement[0].toLowerCase());
+      console.log(agreement[1].toLowerCase());
+      console.log(bob);
+      console.log(alice);
+      if(agreement[0].toLowerCase() === bob && agreement[1].toLowerCase() === alice){
+        fetchGameResult();
+      }
+    } catch (err) {
+      console.error("Error fetching agreement: ", err);
+    }
+  };
+
   return (
     <div>
-      <h1>First Create a Challenge</h1>
+      <h2>First Create a Challenge</h2>
 
       <form
         onSubmit={async (e) => {
@@ -149,7 +159,7 @@ const completeChallenge = async () => {
         </label>
         <br />
         <label>
-          Amount (in Ether):
+          Wager Amount (POL):
           <input
             type="number"
             step="0.01"
@@ -181,11 +191,20 @@ const completeChallenge = async () => {
             <h1 className="White">{gameResult.White}</h1>
             <h2>vs</h2>
             <h1 className="Black">{gameResult.Black}</h1>
-            <h1>{gameResult.Winner} Wins!</h1>
+            <h1>{gameResult.Winner} Wins {ethAmount} POL</h1>
         </div>
       }
 
-      <button onClick={()=>{completeChallenge()}}>Distribute Funds!</button>
+      {isDistribute && 
+        <div>
+          <h2>Funds Are Ready to Distribute!</h2>
+          <button onClick={()=>{completeChallenge()}}>Distribute Funds</button>
+          <p>{distributeText}</p>
+        </div>
+      }
+
+      <button onClick={()=>{checkAgreement()}}>Check Agreement</button>
+
     </div>
   );
 }
