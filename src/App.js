@@ -10,7 +10,11 @@ function App() {
   const [gameResult, setGameResult] = useState(null); // State for game result
   const [error, setError] = useState(null); // State for error
   const [isDeposit, setIsDeposit] = useState(false); // State to toggle deposit form
+  const [depositText, setDepoText] = useState('');
   const [walletAddress, setWalletAddress] = useState(null); // State for wallet address
+  const [agreement_text, setAgrText] = useState('');
+  const [ethAmount, setEthAmount] = useState(0);
+
 
   const connectWallet = async () => {
     if (window.ethereum) {
@@ -21,45 +25,49 @@ function App() {
         setBob(accounts[0]); // Optionally, set the connected account as `bob` for convenience
       } catch (err) {
         console.error("Error connecting to MetaMask: ", err);
-        alert("Error connecting to MetaMask: " + err.message);
       }
     } else {
       alert("MetaMask is not installed. Please install it to use this app.");
     }
   };
 
+  connectWallet();
+
   const createAgreement = async () => {
     try {
       const contract = await getContract();
       const amountInWei = parseEther(amount);
       const tx = await contract.newAgreement(bob, alice, amountInWei);
+      setAgrText('Sending Challenge...')
       await tx.wait();
-      alert("Agreement created successfully!");
+      setAgrText('Challenge Successfully Sent!')
       setIsDeposit(true); // Show deposit form after agreement creation
     } catch (err) {
       console.error("Error creating agreement: ", err);
-      alert("Error creating agreement: " + err.message);
     }
   };
 
   const depositFunds = async () => {
     try {
+      const amountInWei = parseEther(amount);
       const contract = await getContract();
-      const tx = await contract.deposit(0); // Deposit function
+      const tx = await contract.deposit(0).send({
+        from: walletAddress,
+        value: amountInWei
+      }); // Deposit function
+      setDepoText('Depositing...');
       await tx.wait();
-      alert("Deposit successful!");
+      setDepoText('Deposit Successful!');
     } catch (err) {
       console.error("Error depositing funds: ", err);
-      alert("Error depositing funds: " + err.message);
     }
   };
 
   const getAgreement = async () => {
     try {
       const contract = await getContract();
-      const agreement = await contract.agreements(0); // Access the last agreement
-      console.log(agreement);
-      return agreement;
+      const agreement = await contract.lastAgreement(); // Access the last agreement
+      return await agreement;
     } catch (err) {
       console.error("Error fetching agreement: ", err);
     }
@@ -87,27 +95,17 @@ function App() {
 
   return (
     <div>
-      <h1>Create Challenge</h1>
-
-      {/* Button to connect MetaMask wallet */}
-      <button onClick={connectWallet}>
-        {walletAddress ? `Connected: ${walletAddress}` : "Connect Wallet"}
-      </button>
+      <h1>First Create a Challenge</h1>
 
       <form
         onSubmit={async (e) => {
           e.preventDefault();
           // First, create the agreement
-          await createAgreement();
-          
-          // Then, fetch the game result
-          // WAIT TO CALL UNTIL GAME IS OVER  
-          // await fetchGameResult();
-          
-          if (gameResult) {
-            alert(gameResult);
-          } else if (error) {
-            alert(error); // Alert any error if it exists
+          try{
+            await createAgreement();
+          }
+          catch (err){
+            console.error(err);
           }
         }}
       >
@@ -118,17 +116,6 @@ function App() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-          />
-        </label>
-        <br />
-        <label>
-          Your Address:
-          <input
-            type="text"
-            value={bob}
-            onChange={(e) => setBob(e.target.value)}
-            required
-            disabled={walletAddress !== null} // Disable field if wallet is connected
           />
         </label>
         <br />
@@ -155,13 +142,17 @@ function App() {
         <button type="submit">Send Challenge!</button>
       </form>
 
+      <p>{agreement_text}</p>
+
       {/* Deposit Section */}
       {isDeposit && (
         <div>
-          <h2>Deposit Funds</h2>
+          <h2>Now Deposit Your Funds</h2>
           <button onClick={() => depositFunds(bob)}>Deposit Funds</button>
         </div>
       )}
+
+      <p>{depositText}</p>
 
       {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error messages */}
       {gameResult && 
@@ -173,11 +164,7 @@ function App() {
             <h1>{gameResult.Winner} wins!</h1>
         </div>
       }
-      <button onClick={()=>{
-        getAgreement().then(agreement =>{
-          console.log(agreement);
-        })
-      }}>Get Agreement</button>
+
     </div>
   );
 }
