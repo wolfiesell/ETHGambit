@@ -49,17 +49,13 @@ function App() {
 
   const depositFunds = async () => {
     try {
-      const amountInWei = parseEther(amount);
       const contract = await getContract();
-      const tx = await contract.deposit(0).send({
-        from: walletAddress,
-        value: amountInWei
-      }); // Deposit function
-      setDepoText('Depositing...');
+      const tx = await contract.deposit(0); // Deposit function
       await tx.wait();
-      setDepoText('Deposit Successful!');
+      alert("Deposit successful!");
     } catch (err) {
       console.error("Error depositing funds: ", err);
+      alert("Error depositing funds: " + err.message);
     }
   };
 
