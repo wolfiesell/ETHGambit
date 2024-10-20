@@ -1,7 +1,7 @@
 import { ethers } from "ethers";  // Import ethers directly
 
 // Contract Address and ABI
-const contractAddress = "0xe3cCEB8F78B38AD2D30ce264C64D4609a2026277";
+const contractAddress = "0xF033F321E14456ef555bE9Ca30f369690c518fD0";
 const abi = [
 	{
 		"inputs": [
@@ -115,6 +115,51 @@ const abi = [
 				"internalType": "bool",
 				"name": "aliceIn",
 				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "lastAgreement",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "bob",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "alice",
+						"type": "address"
+					},
+					{
+						"internalType": "enum Escrow.ArbitratorDecision",
+						"name": "arbitratorDecision",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "bobIn",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "aliceIn",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct Escrow.Agreement",
+				"name": "",
+				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",
