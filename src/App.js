@@ -14,6 +14,7 @@ function App() {
   const [agreement_text, setAgrText] = useState('');
   const [ethAmount, setEthAmount] = useState(0);
   const [distributeText, setDistributeText] = useState('');
+  const [refreshButton, setRefreshButton] = useState(false);
   const [isDistribute, setIsDistribute] = useState(false);
 
 
@@ -62,7 +63,7 @@ function App() {
     setDepoText('Depositing Funds...');
     await tx.wait();
     setDepoText('Deposit Successful!');
-    setIsDistribute(true);
+    setRefreshButton(true);
   } catch (err) {
     console.error("Error depositing funds: ", err);
   }
@@ -100,6 +101,8 @@ const completeChallenge = async () => {
       }
       const result = await response.json();
       setGameResult(result); // Update the state with the game result
+      setIsDistribute(true);
+      setRefreshButton(false);
     } catch (err) {
       setError(err);
       setGameResult(null); // Clear previous game results
@@ -110,10 +113,6 @@ const completeChallenge = async () => {
     try {
       const contract = await getContract();
       const agreement = await contract.lastAgreement(); // Access the last agreement
-      console.log(agreement[0].toLowerCase());
-      console.log(agreement[1].toLowerCase());
-      console.log(bob);
-      console.log(alice);
       if(agreement[0].toLowerCase() === bob && agreement[1].toLowerCase() === alice){
         fetchGameResult();
       }
@@ -124,6 +123,8 @@ const completeChallenge = async () => {
 
   return (
     <div>
+      <h1>ETHGambit</h1>
+      <br></br>
       <h2>First Create a Challenge</h2>
 
       <form
@@ -185,6 +186,12 @@ const completeChallenge = async () => {
       <p>{depositText}</p>
 
       {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error messages */}
+      {refreshButton &&
+        <div>
+          <h2>Waiting For Game to End...</h2>
+          <button onClick={()=>{checkAgreement()}}>Refresh Game Results</button>
+        </div>
+      }
       {gameResult && 
         <div>
             <h1 className="title">Game Results:</h1>
@@ -202,8 +209,6 @@ const completeChallenge = async () => {
           <p>{distributeText}</p>
         </div>
       }
-
-      <button onClick={()=>{checkAgreement()}}>Check Agreement</button>
 
     </div>
   );
