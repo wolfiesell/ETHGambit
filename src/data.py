@@ -27,15 +27,24 @@ def get_latest_game_result():
             white_username = players.get("white", {}).get("user", {}).get("name", "unknown")
             black_username = players.get("black", {}).get("user", {}).get("name", "unknown")
 
-            if winner:
+            if winner == "white":
                 result = {
-                    "Winner": winner,
+                    "Winner": "White",
+                    "Code": 0,
+                    "White": white_username,
+                    "Black": black_username,
+                }
+            elif winner == "black":
+                result = {
+                    "Winner": "Black",
+                    "Code": 1,
                     "White": white_username,
                     "Black": black_username,
                 }
             else:
                 result = {
                     "Result": "Draw",
+                    "Code": 2,
                     "White": white_username,
                     "Black": black_username
                 }

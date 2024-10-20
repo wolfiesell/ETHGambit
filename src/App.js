@@ -6,7 +6,6 @@ function App() {
   const [username, setUsername] = useState("");
   const [bob, setBob] = useState("");       
   const [alice, setAlice] = useState("");   
-  const [amount, setAmount] = useState(""); 
   const [gameResult, setGameResult] = useState(null); // State for game result
   const [error, setError] = useState(null); // State for error
   const [isDeposit, setIsDeposit] = useState(false); // State to toggle deposit form
@@ -36,7 +35,7 @@ function App() {
   const createAgreement = async () => {
     try {
       const contract = await getContract();
-      const amountInWei = parseEther(amount);
+      const amountInWei = parseEther(ethAmount);
       const tx = await contract.newAgreement(bob, alice, amountInWei);
       setAgrText('Sending Challenge...')
       await tx.wait();
@@ -48,26 +47,51 @@ function App() {
   };
 
   const depositFunds = async () => {
-    try {
-      const contract = await getContract();
-      const tx = await contract.deposit(0); // Deposit function
-      await tx.wait();
-      alert("Deposit successful!");
-    } catch (err) {
-      console.error("Error depositing funds: ", err);
-      alert("Error depositing funds: " + err.message);
-    }
-  };
+  try {
+    const contract = await getContract();
+    
+    // Convert the amount to the appropriate format (Wei)
+    const amountInWei = ethers.parseEther(ethAmount.toString());
+    
+    // Call the deposit function and include the value in the transaction
+    const tx = await contract.deposit(0, {
+      value: amountInWei // Send the value along with the transaction
+    });
+    setDepoText('Depositing...');
+    await tx.wait();
+    setDepoText('Deposit Successful!');
+  } catch (err) {
+    console.error("Error depositing funds: ", err);
+  }
+};
 
-  const getAgreement = async () => {
-    try {
-      const contract = await getContract();
-      const agreement = await contract.lastAgreement(); // Access the last agreement
-      return await agreement;
-    } catch (err) {
-      console.error("Error fetching agreement: ", err);
+const completeChallenge = async () => {
+  try {
+    const contract = await getContract();
+    await fetchGameResult(); // Wait for game result to be fetched
+
+    if (!gameResult) {
+      throw new Error("Game result is not available or invalid.");
     }
-  };
+
+    const tx = await contract.complete(0, gameResult.Code); // Ensure gameResult.Code is valid
+    await tx.wait();
+    console.log("Challenge completed!");
+  } catch (err) {
+    console.error("Error completing challenge: ", err);
+  }
+};
+
+
+  // const getAgreement = async () => {
+  //   try {
+  //     const contract = await getContract();
+  //     const agreement = await contract.lastAgreement(); // Access the last agreement
+  //     return await agreement;
+  //   } catch (err) {
+  //     console.error("Error fetching agreement: ", err);
+  //   }
+  // };
 
   const fetchGameResult = async () => {
     if (!username) {
@@ -82,9 +106,8 @@ function App() {
       }
       const result = await response.json();
       setGameResult(result); // Update the state with the game result
-      setError(null); // Clear any previous errors
     } catch (err) {
-      setError(`Failed to fetch data: ${err.message}`);
+      setError(err);
       setGameResult(null); // Clear previous game results
     }
   };
@@ -128,9 +151,10 @@ function App() {
         <label>
           Amount (in Ether):
           <input
-            type="text"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            step="0.01"
+            value={ethAmount}
+            onChange={(e) => setEthAmount(e.target.value)}
             required
           />
         </label>
@@ -144,7 +168,7 @@ function App() {
       {isDeposit && (
         <div>
           <h2>Now Deposit Your Funds</h2>
-          <button onClick={() => depositFunds(bob)}>Deposit Funds</button>
+          <button onClick={() => depositFunds()}>Deposit Funds</button>
         </div>
       )}
 
@@ -157,10 +181,11 @@ function App() {
             <h1 className="White">{gameResult.White}</h1>
             <h2>vs</h2>
             <h1 className="Black">{gameResult.Black}</h1>
-            <h1>{gameResult.Winner} wins!</h1>
+            <h1>{gameResult.Winner} Wins!</h1>
         </div>
       }
 
+      <button onClick={()=>{completeChallenge()}}>Distribute Funds!</button>
     </div>
   );
 }
