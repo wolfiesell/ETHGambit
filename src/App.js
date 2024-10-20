@@ -1,6 +1,6 @@
-import React, { useState } from 'react';  
+import React, { useState } from 'react';
 import { ethers, parseEther } from "ethers";
-import { getContract } from './contract';  
+import { getContract } from './contract';
 
 function App() {
   const [username, setUsername] = useState("");
@@ -10,6 +10,23 @@ function App() {
   const [gameResult, setGameResult] = useState(null); // State for game result
   const [error, setError] = useState(null); // State for error
   const [isDeposit, setIsDeposit] = useState(false); // State to toggle deposit form
+  const [walletAddress, setWalletAddress] = useState(null); // State for wallet address
+
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []); // Request account access
+        setWalletAddress(accounts[0]); // Set the first account as the connected address
+        setBob(accounts[0]); // Optionally, set the connected account as `bob` for convenience
+      } catch (err) {
+        console.error("Error connecting to MetaMask: ", err);
+        alert("Error connecting to MetaMask: " + err.message);
+      }
+    } else {
+      alert("MetaMask is not installed. Please install it to use this app.");
+    }
+  };
 
   const createAgreement = async () => {
     try {
@@ -37,6 +54,17 @@ function App() {
     }
   };
 
+  const getAgreement = async () => {
+    try {
+      const contract = await getContract();
+      const agreement = await contract.agreements(0); // Access the last agreement
+      console.log(agreement);
+      return agreement;
+    } catch (err) {
+      console.error("Error fetching agreement: ", err);
+    }
+  };
+
   const fetchGameResult = async () => {
     if (!username) {
       setError("Please enter a username.");
@@ -60,6 +88,12 @@ function App() {
   return (
     <div>
       <h1>Create Challenge</h1>
+
+      {/* Button to connect MetaMask wallet */}
+      <button onClick={connectWallet}>
+        {walletAddress ? `Connected: ${walletAddress}` : "Connect Wallet"}
+      </button>
+
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -78,7 +112,7 @@ function App() {
         }}
       >
         <label>
-          Your Username:
+          Your Lichess Username:
           <input
             type="text"
             value={username}
@@ -94,6 +128,7 @@ function App() {
             value={bob}
             onChange={(e) => setBob(e.target.value)}
             required
+            disabled={walletAddress !== null} // Disable field if wallet is connected
           />
         </label>
         <br />
@@ -138,6 +173,11 @@ function App() {
             <h1>{gameResult.Winner} wins!</h1>
         </div>
       }
+      <button onClick={()=>{
+        getAgreement().then(agreement =>{
+          console.log(agreement);
+        })
+      }}>Get Agreement</button>
     </div>
   );
 }
